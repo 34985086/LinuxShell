@@ -1,0 +1,54 @@
+#!/bin/bash
+
+filelist=`ls|grep "\.ts$"`
+
+if [[ -z ${filelist} ]]
+then
+    echo "No ts file in current directory."
+fi
+
+./ts2html $filelist
+
+
+#
+#no used
+#
+fun(){
+if [ ! -d html ]
+then
+    mkdir html
+fi
+
+for langfile in $filelist
+do 
+    lang=${langfile%.ts}
+    htmlfile=html/${lang}.html
+    echo "<!DOCTYPE HTML><html><head><meta charset=\"utf-8\"><title>${lang}</title></head>"> ${htmlfile}
+    echo "<table border=\"1\" width=\"600\" cellspacing=\"0\" cellpadding=\"3\">"         >> ${htmlfile}
+    echo "<tr>"                         >> ${htmlfile}
+    echo "<th width=\"300\">English</th>"             >> ${htmlfile}
+    echo "<th width=\"300\">${lang}</th>"             >> ${htmlfile}
+    echo "</tr>"                        >> ${htmlfile}
+
+    cat $lang.ts                            \
+        |grep -v "<?xml version="           \
+        |grep -v "<!DOCTYPE TS>"            \
+        |grep -v "<location filename="      \
+        |grep -v "<context>"                \
+        |grep -v "<\/context>"              \
+        |grep -v "<name>"                   \
+        |grep -v "<\/name>"                 \
+        |grep -v "<TS"                      \
+        |grep -v "<\/TS>"                   \
+        |sed "s/<message>/<tr>/g"                           \
+        |sed "s/<\/message>/<\/tr>/g"                       \
+        |sed "s/<source>/<td>/g"                            \
+        |sed "s/<\/source>/<\/td>/g"                        \
+        |sed "s/<translation>/<td>/g"                       \
+        |sed "s/<translation type=\"obsolete\">/<td style=\"color:#C0C0C0\">/g"     \
+        |sed "s/<translation type=\"unfinished\">/<td>/g"   \
+        |sed "s/<\/translation>/<\/td>/g"   >> ${htmlfile}
+
+    echo "</table>"                         >> ${htmlfile}
+done
+}

@@ -1,0 +1,66 @@
+#!/bin/bash
+for file in $@
+do
+    if [[ ! $file =~ ".ts" ]] 
+    then
+        echo "Please choose ts file."
+        exit 1
+    fi
+done
+
+if [ ! -d html ]
+then
+    mkdir html
+fi
+
+
+function trimString()
+{
+    ######################################
+    #function:trim string 
+    #$1:source
+    #$2:trim header 
+    #$3:trim tail 
+    ######################################
+    local src=$1
+    local tmp1=${src#$2}
+    local result=${tmp1%$3}
+    echo $result
+}
+
+for langfile in $@
+do 
+    lang=${langfile%.ts}
+    htmlfile=html/${lang}.html
+    echo "<!DOCTYPE HTML><html><head><meta charset=\"utf-8\"><title>${lang}</title></head>"> ${htmlfile}
+    echo "<table border=\"1\" width=\"600\" cellspacing=\"0\" cellpadding=\"3\">"         >> ${htmlfile}
+    echo "<thead>"                                      >> ${htmlfile}
+    echo "<th width=\"300\">English</th>"               >> ${htmlfile}
+    echo "<th width=\"300\">${lang}</th>"               >> ${htmlfile}
+    echo "</thead>"                                     >> ${htmlfile}
+    
+    
+    while read line
+    do
+        #echo $line
+        if [[ $line =~ "<source>" ]]
+        then
+            echo "    <td>$(trimString "$line" "<source>" "</source>")</td>"           >> ${htmlfile}
+        elif [[ $line =~ "<translation>" ]]
+        then
+            echo "    <td>$(trimString "$line" "<translation>" "</translation>")</td>"  >> ${htmlfile}
+        elif [[ $line =~ "\"obsolete\"" ]]
+        then
+            echo "    <td style=\"color:#C0C0C0\">$(trimString "$line" "<translation type=\"obsolete\">" "</translation>")</td>"  >> ${htmlfile}
+        elif [[ $line =~ "<message>" ]]
+        then
+            echo "<tr>"                                                                 >> ${htmlfile}
+        elif [[ $line =~ "</message>" ]]
+        then
+            echo "</tr>"                                                                >> ${htmlfile}
+        fi
+    done < $langfile
+    
+    echo "</table>"                                     >> ${htmlfile}
+    echo "${htmlfile}"
+done
